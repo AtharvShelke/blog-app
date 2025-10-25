@@ -1,0 +1,32 @@
+app/page.tsx landing page
+complete app/dashboard
+complete components/layout
+components/PostDetail.tsx
+components/CategoryBadge.tsx
+
+
+dashboard/CategoryForm.tsx
+dashboard/PostTable.tsx
+dashboard/CategoryManager.tsx
+dashboard/DashboardSidebar.tsx
+
+
+editor/MarkdownEditor.tsx
+editor/MarkdownPreview.tsx
+
+
+common/LoadingSpinner.tsx
+common/ErrorMessage.tsx
+common/EmptyState.tsx
+
+                       
+store/uiStore.ts              
+store/editorStore.ts          
+
+                        
+types/index.ts                
+types/post.ts                  
+types/category.ts             
+
+config/site.ts                 
+                 
