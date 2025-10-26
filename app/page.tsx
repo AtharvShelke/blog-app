@@ -84,7 +84,7 @@ export default function HomePage() {
       </section>
 
       {/* Enhanced Features Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-secondary/30">
+      <section className="relative flex-1 flex items-center justify-center overflow-hidden px-4 py-20 md:py-32">
         <div className="container max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -155,7 +155,7 @@ export default function HomePage() {
       </section>
 
       {/* Technology Stack Section */}
-      <section className="py-20 px-4 bg-background">
+      <section className="relative flex-1 flex items-center justify-center overflow-hidden px-4 py-20 md:py-32">
         <div className="container max-w-4xl">
           <div className="text-center mb-12">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">Built with Modern Excellence</h3>
@@ -172,7 +172,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative py-20 px-4 overflow-hidden bg-gradient-to-br from-background via-background to-primary/10">
+      <section className="relative py-20 px-4 overflow-hidden bg-gradient-to-br from-background via-background to-primary/10 flex justify-center">
         {/* Background Elements that work in both themes */}
         <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-primary/5" />
         <div className="absolute top-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
