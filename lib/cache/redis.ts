@@ -1,19 +1,23 @@
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
+
 dotenv.config();
+
+// Use rediss:// for TLS connections
+const redisUrl = `rediss://${process.env.REDIS_USERNAME}:${process.env.REDIS_PASSWORD}@redis-18667.c74.us-east-1-4.ec2.redns.redis-cloud.com:18667`;
+
 const client = createClient({
-  username: process.env.REDIS_USERNAME || 'default',
-  password: process.env.REDIS_PASSWORD!,
+  url: redisUrl,
   socket: {
-    host: 'redis-18667.c74.us-east-1-4.ec2.redns.redis-cloud.com',
-    port: 18667,
-    tls: true, // 👈 important for Redis Cloud
+    tls: true,
+    rejectUnauthorized: false,
   },
 });
 
 client.on('error', (err) => console.error('Redis Client Error:', err));
 
 await client.connect();
+
 
 const CACHE_TTL = {
   SHORT: 60 * 5,       // 5 minutes
