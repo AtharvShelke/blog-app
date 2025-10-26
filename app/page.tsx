@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  ArrowRight, 
-  BookOpen, 
-  Edit3, 
-  Layout, 
-  Sparkles, 
+import {
+  ArrowRight,
+  BookOpen,
+  Edit3,
+  Layout,
+  Sparkles,
   Zap,
   Users,
   Shield,
@@ -14,7 +14,8 @@ import {
   Rocket,
   TrendingUp,
   Code,
-  Palette
+  Palette,
+  Eye
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -26,13 +27,13 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
         <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-        
+
         <div className="container max-w-6xl text-center space-y-8 relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-4 backdrop-blur-sm">
             <Sparkles className="w-4 h-4" />
             <span>Next-Gen Blogging Platform</span>
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
             Craft Your
             <br />
@@ -40,12 +41,12 @@ export default function HomePage() {
               Digital Legacy
             </span>
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Transform your ideas into compelling stories with our AI-powered platform. 
+            Transform your ideas into compelling stories with our AI-powered platform.
             Built for creators who demand excellence.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             <Button size="lg" asChild className="min-w-[200px] group relative overflow-hidden">
               <Link href="/blog">
@@ -171,39 +172,76 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Enhanced CTA Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/90" />
-        <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-        
+      <section className="relative py-20 px-4 overflow-hidden bg-gradient-to-br from-background via-background to-primary/10">
+        {/* Background Elements that work in both themes */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-primary/5" />
+        <div className="absolute top-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+
         <div className="container max-w-4xl text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-medium backdrop-blur-sm">
+          {/* Theme-consistent badge - Already centered */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium backdrop-blur-sm">
             <Rocket className="w-4 h-4" />
             <span>Ready to Launch?</span>
           </div>
-          
-          <h2 className="text-3xl md:text-5xl font-bold text-white">
-            Start Your Journey Today
+
+          {/* Theme-consistent typography - Already centered */}
+          <h2 className="text-3xl md:text-5xl font-bold">
+            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              Start Your
+            </span>
+            <br />
+            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Journey Today
+            </span>
           </h2>
-          
-          <p className="text-xl text-white/90 max-w-2xl mx-auto">
-            Join thousands of creators who are already building their digital empire
+
+          {/* Paragraph - Already centered with mx-auto */}
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Join thousands of creators who are already building their digital legacy
           </p>
-          
+
+          {/* Buttons - Already centered with justify-center */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            <Button size="lg" variant="secondary" asChild className="min-w-[200px] group">
+            <Button
+              size="lg"
+              asChild
+              className="min-w-[200px] group"
+            >
               <Link href="/dashboard/posts/new">
                 <Palette className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                 Create First Post
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="min-w-[200px] border-white text-white hover:bg-white hover:text-primary">
+
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="min-w-[200px]"
+            >
               <Link href="/blog">
+                <Eye className="w-4 h-4 mr-2" />
                 Explore Stories
               </Link>
             </Button>
+          </div>
+
+          {/* Trust indicators - Already centered with justify-center */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-8 text-muted-foreground text-sm">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span>10,000+ Creators</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span>50,000+ Articles</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              <span>98% Satisfaction</span>
+            </div>
           </div>
         </div>
       </section>
