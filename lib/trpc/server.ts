@@ -28,6 +28,14 @@ export const trpc = {
       const caller = await createServerTRPC();
       return caller.post.getById(input);
     },
+    getTrending: async (input: Parameters<Awaited<ReturnType<typeof createServerTRPC>>['post']['getTrending']>[0]) => {
+      const caller = await createServerTRPC();
+      return caller.post.getTrending(input);
+    },
+    recordView: async (input: Parameters<Awaited<ReturnType<typeof createServerTRPC>>['post']['recordView']>[0]) => {
+      const caller = await createServerTRPC();
+      return caller.post.recordView(input);
+    },
   },
   category: {
     getAll: async () => {

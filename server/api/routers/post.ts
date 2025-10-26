@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
-import { posts, postCategories, categories } from '@/server/db/schema';
-import { eq, desc, and, or, like, sql } from 'drizzle-orm';
+import { posts, postCategories, categories, users, postViews } from '@/server/db/schema'; // ✅ Added missing imports
+import { eq, desc, and, or, like, sql, gt, count } from 'drizzle-orm'; // ✅ Added missing imports
 import slugify from 'slugify';
 import { TRPCError } from '@trpc/server';
+import { headers } from 'next/headers'; // ✅ Added headers import
 
 const createPostSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -90,6 +91,142 @@ export const postRouter = createTRPCRouter({
           hasMore: offset + limit < total,
         },
       };
+    }),
+
+  // ✅ FIXED: Trending posts with proper imports
+  getTrending: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(20).default(5),
+        days: z.number().min(1).max(30).default(7), // Trending from last 7 days
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { limit, days } = input;
+      
+      // Calculate date threshold (last X days)
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
+
+      try {
+        const trendingPosts = await ctx.db
+          .select({
+            id: posts.id,
+            title: posts.title,
+            slug: posts.slug,
+            excerpt: posts.excerpt,
+            thumbnail: posts.thumbnail,
+            createdAt: posts.createdAt,
+            published: posts.published,
+            author: users,
+            viewCount: count(postViews.id).as('viewCount'),
+          })
+          .from(posts)
+          .where(
+            and(
+              eq(posts.published, true),
+              gt(posts.createdAt, dateThreshold)
+            )
+          )
+          .leftJoin(users, eq(posts.authorId, users.id))
+          .leftJoin(postViews, and(
+            eq(postViews.postId, posts.id),
+            gt(postViews.createdAt, dateThreshold)
+          ))
+          .groupBy(posts.id, users.id)
+          .orderBy(desc(count(postViews.id)), desc(posts.createdAt))
+          .limit(limit);
+
+        // Also fetch categories for each post
+        const postsWithCategories = await Promise.all(
+          trendingPosts.map(async (post) => {
+            const postCategoriesData = await ctx.db.query.postCategories.findMany({
+              where: eq(postCategories.postId, post.id),
+              with: {
+                category: true,
+              },
+            });
+
+            return {
+              ...post,
+              postCategories: postCategoriesData,
+            };
+          })
+        );
+
+        return postsWithCategories;
+      } catch (error) {
+        console.error('Error fetching trending posts:', error);
+        
+        // Fallback to recent posts if trending query fails
+        return await ctx.db.query.posts.findMany({
+          where: (posts, { and, gt, eq }) => and(
+            eq(posts.published, true),
+            gt(posts.createdAt, dateThreshold)
+          ),
+          orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+          limit,
+          with: {
+            author: true,
+            postCategories: {
+              with: {
+                category: true,
+              },
+            },
+          },
+        });
+      }
+    }),
+
+  // ✅ FIXED: Record view with proper imports
+  recordView: publicProcedure
+    .input(
+      z.object({
+        postId: z.number(),
+        userId: z.number().optional(), // Optional for logged-in users
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { postId, userId } = input;
+      
+      try {
+        // Get IP address from request
+        const headersList = await headers();
+        const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0] || 
+                         headersList.get('x-real-ip') || 
+                         'unknown';
+        
+        const userAgent = headersList.get('user-agent') || 'unknown';
+
+        // Check if we should record this view (basic duplicate prevention)
+        const recentView = await ctx.db.query.postViews.findFirst({
+          where: (views, { and, eq, gt }) => and(
+            eq(views.postId, postId),
+            eq(views.ipAddress, ipAddress),
+            gt(views.createdAt, new Date(Date.now() - 30 * 60 * 1000)) // 30 minutes
+          ),
+        });
+
+        if (recentView) {
+          return { success: true, message: 'View already recorded recently' };
+        }
+
+        // Record the view
+        await ctx.db.insert(postViews).values({
+          postId,
+          userId: userId || null,
+          ipAddress,
+          userAgent,
+        });
+
+        return { success: true, message: 'View recorded' };
+      } catch (error) {
+        console.error('Error recording post view:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to record view',
+        });
+      }
     }),
 
   // Optimized method for just getting featured + recent (no pagination needed)

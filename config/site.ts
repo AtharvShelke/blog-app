@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: 'BlogApp',
+  name: 'Nexus',
   description: 'A modern blogging platform built with Next.js, tRPC, and Drizzle ORM',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   author: {

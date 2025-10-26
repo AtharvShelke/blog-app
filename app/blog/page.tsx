@@ -3,7 +3,9 @@ import { PostList } from '@/components/blog/PostList';
 import { CategoryFilter } from '@/components/blog/CategoryFilter';
 import { FeaturedSection } from '@/components/blog/FeaturedSection';
 import { Pagination } from '@/components/blog/Pagination';
-import { Sparkles } from 'lucide-react';
+import { Newsletter } from '@/components/blog/Newsletter';
+import { TrendingPosts } from '@/components/blog/TrendingPosts';
+import { Sparkles, TrendingUp, Users, Clock, Eye } from 'lucide-react';
 import { Suspense } from 'react';
 import { PostListSkeleton } from '@/components/blog/PostListSkeleton';
 
@@ -19,107 +21,168 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const currentPage = Number(params.page) || 1;
   const categorySlug = params.category;
   
-  // Fetch categories
-  const categories = await trpc.category.getAll();
+  try {
+    // Fetch data in parallel
+    const [categories, postsData, trendingPosts] = await Promise.all([
+      trpc.category.getAll(),
+      trpc.post.getAll({
+        published: true,
+        categorySlug,
+        page: currentPage,
+        limit: 9,
+      }),
+      // Now this will work with the proper implementation
+      trpc.post.getTrending({ limit: 3 }),
+    ]);
 
-  // Determine if we should show featured section
-  const showFeatured = !categorySlug && currentPage === 1;
+    const { posts, pagination } = postsData;
 
-  // Fetch paginated posts
-  const { posts, pagination } = await trpc.post.getAll({
-    published: true,
-    categorySlug,
-    page: currentPage,
-    limit: 12, // Adjust based on your needs
-  });
+    // Determine if we should show featured section
+    const showFeatured = !categorySlug && currentPage === 1;
+    const featuredPosts = showFeatured 
+      ? await trpc.post.getFeatured({ count: 3 })
+      : [];
 
-  // Fetch featured posts only if needed
-  const featuredPosts = showFeatured 
-    ? await trpc.post.getFeatured({ count: 4 })
-    : [];
+    const [featuredPost, ...recentPosts] = featuredPosts;
 
-  const [featuredPost, ...recentPosts] = featuredPosts;
+    // Stats for the header
+    const stats = [
+      { icon: Users, label: 'Active Readers', value: '50K+' },
+      { icon: Clock, label: 'Avg. Read Time', value: '5 min' },
+      { icon: Eye, label: 'Monthly Views', value: '1M+' },
+    ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="container mx-auto px-4 pt-16 pb-8 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              <Sparkles className="w-4 h-4" />
-              <span>Latest Insights & Stories</span>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      
+
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-3 space-y-12">
+              {/* Enhanced Category Filter */}
+              <section className="bg-card/50 backdrop-blur-sm rounded-2xl border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                    Explore Topics
+                  </h2>
+                  <div className="text-sm text-muted-foreground">
+                    {categories.length} categories
+                  </div>
+                </div>
+                <CategoryFilter categories={categories} />
+              </section>
+
+              {/* Featured Section */}
+              {showFeatured && featuredPost && (
+                <FeaturedSection 
+                  featuredPost={featuredPost}
+                  recentPosts={recentPosts}
+                />
+              )}
+
+              {/* Main Content Header */}
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                      {categorySlug 
+                        ? `${categories.find(c => c.slug === categorySlug)?.name || 'Category'} Articles`
+                        : showFeatured ? 'More Stories' : 'All Articles'
+                      }
+                    </h2>
+                    <p className="text-muted-foreground mt-2">
+                      {pagination.total} {pagination.total === 1 ? 'article' : 'articles'} • 
+                      Page {currentPage} of {pagination.totalPages}
+                    </p>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent ml-8 hidden lg:block" />
+                </div>
+
+                {/* Posts Grid */}
+                <Suspense fallback={<PostListSkeleton count={9} />}>
+                  <PostList posts={posts} />
+                </Suspense>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-center pt-8">
+                    <Pagination
+                      currentPage={pagination.page}
+                      totalPages={pagination.totalPages}
+                      categorySlug={categorySlug}
+                    />
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {posts.length === 0 && (
+                  <div className="text-center py-16 bg-card/50 rounded-2xl border">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-2xl font-bold mb-3">No articles found</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      {categorySlug 
+                        ? "We couldn't find any articles in this category. Try exploring other topics!"
+                        : "Stay tuned! New content is coming soon."
+                      }
+                    </p>
+                    {categorySlug && (
+                      <button 
+                        onClick={() => window.history.back()}
+                        className="text-primary hover:underline"
+                      >
+                        View all categories
+                      </button>
+                    )}
+                  </div>
+                )}
+              </section>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-              Discover Our Blog
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Dive into expert insights, tutorials, and stories that inspire innovation
-            </p>
+
+            {/* Sidebar */}
+            <div className="space-y-8">
+              {/* Trending Posts - Now with real data! */}
+              <TrendingPosts posts={trendingPosts} />
+
+              {/* Newsletter Signup */}
+              <Newsletter />
+
+              {/* Quick Stats */}
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl border p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Community Stats
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Weekly Readers</span>
+                    <span className="font-semibold">25K+</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Articles Published</span>
+                    <span className="font-semibold">{pagination.total}+</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Expert Writers</span>
+                    <span className="font-semibold">50+</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="container mx-auto px-4 pb-20">
-        {/* Category Filter */}
-        <div className="mb-12 flex justify-center">
-          <div className="inline-block p-1 bg-muted/50 rounded-lg backdrop-blur-sm">
-            <CategoryFilter categories={categories} />
-          </div>
-        </div>
-
-        {/* Featured Section - Only show on first page without filters */}
-        {showFeatured && featuredPost && (
-          <FeaturedSection 
-            featuredPost={featuredPost}
-            recentPosts={recentPosts}
-          />
-        )}
-
-        {/* Main Post Grid with Pagination */}
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                {categorySlug ? 'Filtered Posts' : showFeatured ? 'More Articles' : 'All Posts'}
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                {pagination.total} {pagination.total === 1 ? 'post' : 'posts'} found
-              </p>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent ml-8" />
-          </div>
-
-          <Suspense fallback={<PostListSkeleton count={12} />}>
-            <PostList posts={posts} />
-          </Suspense>
-
-          {/* Pagination Component */}
-          {pagination.totalPages > 1 && (
-            <div className="flex justify-center pt-8">
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                categorySlug={categorySlug}
-              />
-            </div>
-          )}
-
-          {/* Empty State */}
-          {posts.length === 0 && (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">📭</div>
-              <h3 className="text-2xl font-bold mb-2">No posts found</h3>
-              <p className="text-muted-foreground mb-6">
-                {categorySlug 
-                  ? "Try selecting a different category or view all posts" 
-                  : "Check back soon for new content"}
-              </p>
-            </div>
-          )}
+    );
+  } catch (error) {
+    console.error('Error loading blog page:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+          <p className="text-muted-foreground">Please try refreshing the page.</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 }

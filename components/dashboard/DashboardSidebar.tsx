@@ -112,8 +112,9 @@ export function DashboardSidebar() {
           {/* Footer */}
           <div className="border-t p-4">
             <p className="text-xs text-muted-foreground">
-              BlogApp Dashboard v1.0
+              Nexus Dashboard v1.0
             </p>
+            
           </div>
         </div>
       </aside>

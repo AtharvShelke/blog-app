@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { CategoryFilterProps } from '@/types/category';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { useTransition } from 'react';
 
 export function CategoryFilter({ categories }: CategoryFilterProps) {
@@ -17,52 +17,81 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
       const params = new URLSearchParams(searchParams.toString());
       
       if (slug === null || currentCategory === slug) {
-        // Clear category filter and reset to page 1
         params.delete('category');
         params.delete('page');
         router.push('/blog');
       } else {
-        // Set new category and reset to page 1
         params.set('category', slug);
-        params.delete('page'); // Reset pagination when changing category
+        params.delete('page');
         router.push(`/blog?${params.toString()}`);
       }
     });
   };
 
+  const activeCategory = categories.find(cat => cat.slug === currentCategory);
+
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <Filter className="w-4 h-4" />
-        <span className="hidden sm:inline">Filter:</span>
-      </div>
-      
-      <Badge
-        variant={!currentCategory ? 'default' : 'outline'}
-        className={`cursor-pointer px-4 py-2 transition-all duration-200 ${
-          isPending ? 'opacity-50' : 'hover:scale-105'
-        }`}
-        onClick={() => handleCategoryClick(null)}
-      >
-        All Posts
-      </Badge>
-      
-      {categories.map((category) => (
-        <Badge
-          key={category.id}
-          variant={currentCategory === category.slug ? 'default' : 'outline'}
-          className={`cursor-pointer px-4 py-2 transition-all duration-200 ${
-            isPending ? 'opacity-50' : 'hover:scale-105'
-          }`}
-          onClick={() => handleCategoryClick(category.slug)}
+    <div className="space-y-4">
+      {/* Active Filter Display */}
+      {activeCategory && (
+        <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Viewing:</span>
+            <Badge variant="secondary" className="text-primary border-primary/20">
+              {activeCategory.name}
+            </Badge>
+          </div>
+          <button
+            onClick={() => handleCategoryClick(null)}
+            className="p-1 hover:bg-background rounded transition-colors"
+            disabled={isPending}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Categories Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        <button
+          onClick={() => handleCategoryClick(null)}
+          className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+            !currentCategory 
+              ? 'bg-primary text-primary-foreground border-primary shadow-lg scale-105' 
+              : 'bg-card/50 border-border hover:border-primary/50 hover:scale-105'
+          } ${isPending ? 'opacity-50' : ''}`}
+          disabled={isPending}
         >
-          {category.name}
-        </Badge>
-      ))}
-      
+          <div className="flex items-center gap-2 mb-1">
+            <Filter className="w-4 h-4" />
+            <span className="font-medium text-sm">All Posts</span>
+          </div>
+          <div className="text-xs text-muted-foreground">Everything</div>
+        </button>
+
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => handleCategoryClick(category.slug)}
+            className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+              currentCategory === category.slug
+                ? 'bg-primary text-primary-foreground border-primary shadow-lg scale-105' 
+                : 'bg-card/50 border-border hover:border-primary/50 hover:scale-105'
+            } ${isPending ? 'opacity-50' : ''}`}
+            disabled={isPending}
+          >
+            <div className="font-medium text-sm mb-1">{category.name}</div>
+            <div className="text-xs text-muted-foreground line-clamp-2">
+              {category.description || 'Explore articles'}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Loading Indicator */}
       {isPending && (
-        <div className="ml-2">
-          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex justify-center py-4">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
     </div>

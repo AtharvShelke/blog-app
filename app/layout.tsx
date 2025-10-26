@@ -17,8 +17,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BlogApp - Modern Blogging Platform",
-  description: "A powerful blogging platform built with Next.js, tRPC, and Drizzle ORM",
+  title: "Nexus - Modern Content Platform for Creators",
+  description: "Transform your ideas into compelling stories with our AI-powered blogging platform. Built for creators who demand excellence.",
+  keywords: ["blogging", "content", "creator", "writing", "publishing"],
+  authors: [{ name: "Nexus Team" }],
+  openGraph: {
+    title: "Nexus - Modern Content Platform",
+    description: "Transform your ideas into compelling stories",
+    type: "website",
+    locale: "en_US",
+  },
 };
 
 export default function RootLayout({
@@ -27,10 +35,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TRPCProvider>
-          {/* 🧩 Wrap your whole UI here */}
           <ClientUIWrapper>
             <div className="flex flex-col min-h-screen">
               <Header />

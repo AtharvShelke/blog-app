@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useCallback, useMemo, useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, Upload, X, Save, Eye } from 'lucide-react';
@@ -14,17 +14,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarkdownEditor } from '@/components/editor/MarkdownEditor';
 import { MarkdownPreview } from '@/components/editor/MarkdownPreview';
-import { UploadButton } from '@/lib/uploadthing'; // ✅ ensure this re-exports from @uploadthing/react
+import { UploadButton } from '@/lib/uploadthing';
 import { PostFormProps } from '@/types/post';
 import { useEditorStore } from '@/store/editorStore';
 
 export function PostForm({ post, categories }: PostFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  const { content, setContent } = useEditorStore();
-  const isInitialized = useRef(false);
-
+  
+  // State declarations
   const [title, setTitle] = useState(post?.title || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
   const [thumbnail, setThumbnail] = useState(post?.thumbnail || '');
@@ -33,32 +31,60 @@ export function PostForm({ post, categories }: PostFormProps) {
     post?.postCategories?.map((pc) => pc.categoryId) || []
   );
 
+  const { content, setContent } = useEditorStore();
+  
+  // ✅ FIX: Use ref to track initialization
+  const isInitialized = useRef(false);
+
+  // tRPC mutations
   const createPost = trpc.post.create.useMutation();
   const updatePost = trpc.post.update.useMutation();
 
-  // Initialize editor content only once
+  // ✅ FIXED: Initialize editor content only once
   useEffect(() => {
     if (post?.content && !isInitialized.current) {
       setContent(post.content);
       isInitialized.current = true;
     }
-  }, [post?.content]);
+  }, [post?.content, setContent]);
 
-  const toggleCategory = (categoryId: number) => {
-    setSelectedCategories((prev) =>
+  // Memoized category options
+  const categoryOptions = useMemo(() => 
+    categories.map(cat => ({
+      value: cat.id,
+      label: cat.name,
+      description: cat.description,
+    })), 
+    [categories]
+  );
+
+  // Optimized category toggle
+  const toggleCategory = useCallback((categoryId: number) => {
+    setSelectedCategories(prev =>
       prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
+        ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation
+    if (!title.trim()) {
+      alert('Title is required');
+      return;
+    }
+
+    if (!content.trim()) {
+      alert('Content is required');
+      return;
+    }
+
     const data = {
-      title,
-      content,
-      excerpt: excerpt || null,
+      title: title.trim(),
+      content: content.trim(),
+      excerpt: excerpt?.trim() || null,
       thumbnail: thumbnail || null,
       published,
       categoryIds: selectedCategories,
@@ -67,7 +93,10 @@ export function PostForm({ post, categories }: PostFormProps) {
     startTransition(async () => {
       try {
         if (post) {
-          await updatePost.mutateAsync({ id: post.id, ...data });
+          await updatePost.mutateAsync({ 
+            id: post.id, 
+            ...data 
+          });
         } else {
           await createPost.mutateAsync(data);
         }
@@ -128,10 +157,10 @@ export function PostForm({ post, categories }: PostFormProps) {
             <Label>Content *</Label>
             <Tabs defaultValue="edit" className="w-full">
               <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="edit">
+                <TabsTrigger value="edit" disabled={isLoading}>
                   <Upload className="w-4 h-4 mr-2" /> Edit
                 </TabsTrigger>
-                <TabsTrigger value="preview">
+                <TabsTrigger value="preview" disabled={isLoading}>
                   <Eye className="w-4 h-4 mr-2" /> Preview
                 </TabsTrigger>
               </TabsList>
@@ -161,9 +190,7 @@ export function PostForm({ post, categories }: PostFormProps) {
                 <Checkbox
                   id="published"
                   checked={published}
-                  onCheckedChange={(checked) =>
-                    setPublished(!!checked)
-                  }
+                  onCheckedChange={(checked) => setPublished(!!checked)}
                   disabled={isLoading}
                 />
               </div>
@@ -186,6 +213,7 @@ export function PostForm({ post, categories }: PostFormProps) {
                     alt="Thumbnail"
                     fill
                     className="object-cover"
+                    priority
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                     <Button
@@ -207,9 +235,10 @@ export function PostForm({ post, categories }: PostFormProps) {
                     onClientUploadComplete={(res) => {
                       if (res?.[0]?.url) setThumbnail(res[0].url);
                     }}
-                    onUploadError={(err) =>
-                      alert(`Upload failed: ${err.message}`)
-                    }
+                    onUploadError={(err) => {
+                      console.error('Upload failed:', err);
+                      alert(`Upload failed: ${err.message}`);
+                    }}
                   />
                   <p className="text-xs text-muted-foreground">
                     Recommended: 1200×630px
@@ -248,7 +277,11 @@ export function PostForm({ post, categories }: PostFormProps) {
 
           {/* Actions */}
           <div className="flex flex-col gap-2">
-            <Button type="submit" disabled={isLoading} className="w-full">
+            <Button 
+              type="submit" 
+              disabled={isLoading} 
+              className="w-full"
+            >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               <Save className="w-4 h-4 mr-2" />
               {post ? 'Update Post' : 'Create Post'}

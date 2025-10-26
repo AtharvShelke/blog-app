@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Calendar } from 'lucide-react';
 import { PostPageProps } from '@/types/post';
-
+import { PostViewTracker } from '@/components/blog/PostViewTracker';
 
 
 export default async function PostPage({ params }: PostPageProps) {
@@ -17,6 +17,8 @@ export default async function PostPage({ params }: PostPageProps) {
 
     return (
       <article className="container mx-auto px-4 py-12 max-w-4xl">
+        {/* Track views */}
+      <PostViewTracker postId={post.id} />
         {/* Thumbnail */}
         {post.thumbnail && (
           <div className="relative w-full h-[400px] rounded-xl overflow-hidden mb-8">

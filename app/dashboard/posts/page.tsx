@@ -5,7 +5,8 @@ import { PenSquare } from 'lucide-react';
 import { PostTable } from '@/components/dashboard/PostTable';
 
 export default async function PostsManagementPage() {
-  const posts = await trpc.post.getAll({});
+  // ✅ FIX: Destructure the posts from the response
+  const { posts } = await trpc.post.getAll({});
 
   return (
     <div className="space-y-6">
@@ -24,6 +25,7 @@ export default async function PostsManagementPage() {
         </Button>
       </div>
 
+     
       <PostTable posts={posts} />
     </div>
   );

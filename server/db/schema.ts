@@ -44,6 +44,19 @@ export const postCategories = pgTable('post_categories', {
     .notNull(),
 });
 
+// ✅ FIXED: postViews table with proper nullable field
+export const postViews = pgTable('post_views', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id')
+    .references(() => posts.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' }), // ✅ Removed .nullable() - fields are nullable by default
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const postsRelations = relations(posts, ({ one, many }) => ({
   author: one(users, {
     fields: [posts.authorId],
@@ -69,4 +82,16 @@ export const postCategoriesRelations = relations(postCategories, ({ one }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
+}));
+
+// ✅ FIXED: postViews relations
+export const postViewsRelations = relations(postViews, ({ one }) => ({
+  post: one(posts, {
+    fields: [postViews.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postViews.userId],
+    references: [users.id],
+  }),
 }));
