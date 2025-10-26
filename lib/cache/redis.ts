@@ -1,21 +1,30 @@
-import { Redis } from '@upstash/redis';
+import { createClient } from 'redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+const client = createClient({
+  username: 'default',
+  password: 'mFRWoAjSS0KvzObvwI1o3JBlIFmdswAd',
+  socket: {
+    host: 'redis-18667.c74.us-east-1-4.ec2.redns.redis-cloud.com',
+    port: 18667,
+    tls: true, // 👈 important for Redis Cloud
+  },
 });
 
+client.on('error', (err) => console.error('Redis Client Error:', err));
+
+await client.connect();
+
 const CACHE_TTL = {
-  SHORT: 60 * 5, // 5 minutes
-  MEDIUM: 60 * 30, // 30 minutes
-  LONG: 60 * 60 * 24, // 24 hours
+  SHORT: 60 * 5,       // 5 minutes
+  MEDIUM: 60 * 30,     // 30 minutes
+  LONG: 60 * 60 * 24,  // 24 hours
 } as const;
 
 export const cache = {
   get: async <T>(key: string): Promise<T | null> => {
     try {
-      const data = await redis.get(key);
-      return data as T;
+      const data = await client.get(key);
+      return data ? (JSON.parse(data) as T) : null;
     } catch (error) {
       console.error('Cache get error:', error);
       return null;
@@ -24,7 +33,7 @@ export const cache = {
 
   set: async <T>(key: string, value: T, ttl: number = CACHE_TTL.MEDIUM): Promise<void> => {
     try {
-      await redis.setex(key, ttl, value);
+      await client.setEx(key, ttl, JSON.stringify(value));
     } catch (error) {
       console.error('Cache set error:', error);
     }
@@ -32,9 +41,9 @@ export const cache = {
 
   invalidate: async (pattern: string): Promise<void> => {
     try {
-      const keys = await redis.keys(pattern);
+      const keys = await client.keys(pattern);
       if (keys.length > 0) {
-        await redis.del(...keys);
+        await client.del(keys);
       }
     } catch (error) {
       console.error('Cache invalidation error:', error);
@@ -42,7 +51,6 @@ export const cache = {
   },
 };
 
-// Cache keys
 export const cacheKeys = {
   posts: {
     all: (filters: any) => `posts:${JSON.stringify(filters)}`,
