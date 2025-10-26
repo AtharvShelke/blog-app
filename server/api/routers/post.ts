@@ -1,10 +1,9 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
-import { posts, postCategories } from '@/server/db/schema';
-import { eq, desc, and, or, like } from 'drizzle-orm';
+import { posts, postCategories, categories } from '@/server/db/schema';
+import { eq, desc, and, or, like, sql } from 'drizzle-orm';
 import slugify from 'slugify';
 import { TRPCError } from '@trpc/server';
-
 
 const createPostSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -26,34 +25,38 @@ const updatePostSchema = z.object({
 });
 
 export const postRouter = createTRPCRouter({
+  // Enhanced getAll with pagination and proper filtering
   getAll: publicProcedure
     .input(
       z.object({
         published: z.boolean().optional(),
-        categoryId: z.number().optional(),
+        categorySlug: z.string().optional(),
         search: z.string().optional(),
-        limit: z.number().min(1).max(100).default(50),
-        offset: z.number().min(0).default(0),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(12),
       })
     )
     .query(async ({ ctx, input }) => {
+      const { page, limit, published, categorySlug, search } = input;
+      const offset = (page - 1) * limit;
+
+      // Build WHERE conditions
       const conditions = [];
-      
-      if (input.published !== undefined) {
-        conditions.push(eq(posts.published, input.published));
+      if (published !== undefined) {
+        conditions.push(eq(posts.published, published));
       }
-      
-      if (input.search) {
+      if (search) {
         conditions.push(
           or(
-            like(posts.title, `%${input.search}%`),
-            like(posts.content, `%${input.search}%`),
-            like(posts.excerpt, `%${input.search}%`)
+            like(posts.title, `%${search}%`),
+            like(posts.content, `%${search}%`),
+            like(posts.excerpt, `%${search}%`)
           )
         );
       }
 
-      const results = await ctx.db.query.posts.findMany({
+      // Fetch all posts with relations
+      let results = await ctx.db.query.posts.findMany({
         where: conditions.length > 0 ? and(...conditions) : undefined,
         with: {
           author: true,
@@ -64,15 +67,50 @@ export const postRouter = createTRPCRouter({
           },
         },
         orderBy: [desc(posts.createdAt)],
-        limit: input.limit,
-        offset: input.offset,
       });
 
-      if (input.categoryId) {
-        return results.filter(post => 
-          post.postCategories.some(pc => pc.categoryId === input.categoryId)
+      // Filter by category if provided (post-fetch filtering for many-to-many)
+      if (categorySlug) {
+        results = results.filter(post =>
+          post.postCategories.some(pc => pc.category.slug === categorySlug)
         );
       }
+
+      // Calculate pagination
+      const total = results.length;
+      const paginatedResults = results.slice(offset, offset + limit);
+
+      return {
+        posts: paginatedResults,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+          hasMore: offset + limit < total,
+        },
+      };
+    }),
+
+  // Optimized method for just getting featured + recent (no pagination needed)
+  getFeatured: publicProcedure
+    .input(z.object({ 
+      count: z.number().min(1).max(10).default(4) 
+    }))
+    .query(async ({ ctx, input }) => {
+      const results = await ctx.db.query.posts.findMany({
+        where: eq(posts.published, true),
+        with: {
+          author: true,
+          postCategories: {
+            with: {
+              category: true,
+            },
+          },
+        },
+        orderBy: [desc(posts.createdAt)],
+        limit: input.count,
+      });
 
       return results;
     }),
@@ -132,12 +170,12 @@ export const postRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         const { categoryIds, ...postData } = input;
-        
+
         let slug = slugify(postData.title, { lower: true, strict: true });
         const existingPost = await ctx.db.query.posts.findFirst({
           where: eq(posts.slug, slug),
         });
-        
+
         if (existingPost) {
           slug = `${slug}-${Date.now()}`;
         }
@@ -290,7 +328,7 @@ export const postRouter = createTRPCRouter({
 
       const [updatedPost] = await ctx.db
         .update(posts)
-        .set({ 
+        .set({
           published: !post.published,
           updatedAt: new Date(),
         })

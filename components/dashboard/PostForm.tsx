@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Loader2, Upload, X, Save, Eye } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarkdownEditor } from '@/components/editor/MarkdownEditor';
 import { MarkdownPreview } from '@/components/editor/MarkdownPreview';
-import { UploadButton } from '@/lib/uploadthing';
-import { Loader2, Upload, X, Save, Eye } from 'lucide-react';
-import Image from 'next/image';
+import { UploadButton } from '@/lib/uploadthing'; // ✅ ensure this re-exports from @uploadthing/react
 import { PostFormProps } from '@/types/post';
 import { useEditorStore } from '@/store/editorStore';
 
@@ -23,6 +23,7 @@ export function PostForm({ post, categories }: PostFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const { content, setContent } = useEditorStore();
+  const isInitialized = useRef(false);
 
   const [title, setTitle] = useState(post?.title || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
@@ -35,13 +36,13 @@ export function PostForm({ post, categories }: PostFormProps) {
   const createPost = trpc.post.create.useMutation();
   const updatePost = trpc.post.update.useMutation();
 
-  // Initialize editor content - FIXED VERSION
+  // Initialize editor content only once
   useEffect(() => {
-    if (post?.content && content !== post.content) {
+    if (post?.content && !isInitialized.current) {
       setContent(post.content);
+      isInitialized.current = true;
     }
-  }, [post?.content]); // Only run when post.content changes
-
+  }, [post?.content]);
 
   const toggleCategory = (categoryId: number) => {
     setSelectedCategories((prev) =>
@@ -90,7 +91,7 @@ export function PostForm({ post, categories }: PostFormProps) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content - Left Side */}
+        {/* Left Column - Editor */}
         <div className="lg:col-span-2 space-y-6">
           {/* Title */}
           <div className="space-y-2">
@@ -105,9 +106,7 @@ export function PostForm({ post, categories }: PostFormProps) {
               disabled={isLoading}
               className="text-lg font-semibold"
             />
-            <p className="text-xs text-muted-foreground">
-              {title.length}/200 characters
-            </p>
+            <p className="text-xs text-muted-foreground">{title.length}/200</p>
           </div>
 
           {/* Excerpt */}
@@ -121,23 +120,19 @@ export function PostForm({ post, categories }: PostFormProps) {
               maxLength={200}
               disabled={isLoading}
             />
-            <p className="text-xs text-muted-foreground">
-              {excerpt.length}/200 characters
-            </p>
+            <p className="text-xs text-muted-foreground">{excerpt.length}/200</p>
           </div>
 
-          {/* Content Editor with Preview */}
+          {/* Markdown Editor */}
           <div className="space-y-2">
             <Label>Content *</Label>
             <Tabs defaultValue="edit" className="w-full">
               <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="edit">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Edit
+                  <Upload className="w-4 h-4 mr-2" /> Edit
                 </TabsTrigger>
                 <TabsTrigger value="preview">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
+                  <Eye className="w-4 h-4 mr-2" /> Preview
                 </TabsTrigger>
               </TabsList>
 
@@ -156,26 +151,26 @@ export function PostForm({ post, categories }: PostFormProps) {
           </div>
         </div>
 
-        {/* Sidebar - Right Side */}
+        {/* Right Column - Settings */}
         <div className="space-y-6">
-          {/* Publish Settings */}
+          {/* Publish */}
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="published" className="cursor-pointer">
-                  Publish Status
-                </Label>
+                <Label htmlFor="published">Publish Status</Label>
                 <Checkbox
                   id="published"
                   checked={published}
-                  onCheckedChange={(checked) => setPublished(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setPublished(!!checked)
+                  }
                   disabled={isLoading}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
                 {published
-                  ? 'Post will be visible to everyone'
-                  : 'Post will be saved as draft'}
+                  ? 'Post will be visible publicly'
+                  : 'Saved as draft'}
               </p>
             </CardContent>
           </Card>
@@ -184,7 +179,6 @@ export function PostForm({ post, categories }: PostFormProps) {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <Label>Thumbnail Image</Label>
-
               {thumbnail ? (
                 <div className="relative aspect-video rounded-lg overflow-hidden border group">
                   <Image
@@ -193,7 +187,7 @@ export function PostForm({ post, categories }: PostFormProps) {
                     fill
                     className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                     <Button
                       type="button"
                       variant="destructive"
@@ -201,29 +195,24 @@ export function PostForm({ post, categories }: PostFormProps) {
                       onClick={() => setThumbnail('')}
                       disabled={isLoading}
                     >
-                      <X className="w-4 h-4 mr-2" />
-                      Remove
+                      <X className="w-4 h-4 mr-2" /> Remove
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3">
                   <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
-                  <div>
-                    <UploadButton
-                      endpoint="imageUploader"
-                      onClientUploadComplete={(res) => {
-                        if (res?.[0]?.url) {
-                          setThumbnail(res[0].url);
-                        }
-                      }}
-                      onUploadError={(error: Error) => {
-                        alert(`Upload failed: ${error.message}`);
-                      }}
-                    />
-                  </div>
+                  <UploadButton
+                    endpoint="imageUploader"
+                    onClientUploadComplete={(res) => {
+                      if (res?.[0]?.url) setThumbnail(res[0].url);
+                    }}
+                    onUploadError={(err) =>
+                      alert(`Upload failed: ${err.message}`)
+                    }
+                  />
                   <p className="text-xs text-muted-foreground">
-                    Recommended: 1200x630px
+                    Recommended: 1200×630px
                   </p>
                 </div>
               )}
@@ -236,23 +225,19 @@ export function PostForm({ post, categories }: PostFormProps) {
               <CardContent className="pt-6 space-y-4">
                 <Label>Categories</Label>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {categories.map((category) => (
+                  {categories.map((cat) => (
                     <div
-                      key={category.id}
+                      key={cat.id}
                       className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                      onClick={() => toggleCategory(category.id)}
+                      
                     >
                       <Checkbox
-                        id={`cat-${category.id}`}
-                        checked={selectedCategories.includes(category.id)}
-                        onCheckedChange={() => toggleCategory(category.id)}
+                        checked={selectedCategories.includes(cat.id)}
+                        onCheckedChange={() => toggleCategory(cat.id)}
                         disabled={isLoading}
                       />
-                      <Label
-                        htmlFor={`cat-${category.id}`}
-                        className="flex-1 cursor-pointer"
-                      >
-                        {category.name}
+                      <Label className="flex-1 cursor-pointer">
+                        {cat.name}
                       </Label>
                     </div>
                   ))}

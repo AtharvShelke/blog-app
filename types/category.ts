@@ -23,3 +23,27 @@ export interface UpdateCategoryInput {
   name?: string;
   description?: string | null;
 }
+
+
+export interface CategoryFilterProps {
+  categories: Category[];
+}
+export interface CategoryManagerProps {
+  categories: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    createdAt: Date;
+  }>;
+}
+
+export interface CategoryFormProps {
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+  };
+  onSuccess?: () => void;
+}

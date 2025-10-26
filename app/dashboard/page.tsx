@@ -6,7 +6,7 @@ import { FileText, FolderOpen, Eye, PenSquare, TrendingUp } from 'lucide-react';
 import { trpc } from '@/lib/trpc/server';
 
 export default async function DashboardPage() {
-  const posts = await trpc.post.getAll({});
+  const { posts } = await trpc.post.getAll({}); 
   const categories = await trpc.category.getAll();
 
   const publishedPosts = posts.filter(p => p.published);
