@@ -27,16 +27,9 @@ import { CategoryForm } from './CategoryForm';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CategoryManagerProps } from '@/types/category';
 
-interface CategoryManagerProps {
-  categories: Array<{
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    createdAt: Date;
-  }>;
-}
+
 
 export function CategoryManager({ categories }: CategoryManagerProps) {
   const router = useRouter();

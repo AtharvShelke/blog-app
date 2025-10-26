@@ -6,12 +6,9 @@ import { formatDistanceToNow } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Calendar } from 'lucide-react';
+import { PostPageProps } from '@/types/post';
 
-interface PostPageProps {
-  params: Promise<{    
-    slug: string;
-  }>;
-}
+
 
 export default async function PostPage({ params }: PostPageProps) {
   try {

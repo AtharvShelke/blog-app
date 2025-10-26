@@ -1,17 +1,10 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { CategoryFilterProps } from '@/types/category';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-}
 
-interface CategoryFilterProps {
-  categories: Category[];
-}
 
 export function CategoryFilter({ categories }: CategoryFilterProps) {
   const router = useRouter();

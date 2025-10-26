@@ -1,12 +1,9 @@
 import { trpc } from '@/lib/trpc/server';
 import { PostForm } from '@/components/dashboard/PostForm';
 import { notFound } from 'next/navigation';
+import type { EditPostPageProps } from '@/types/post';
 
-interface EditPostPageProps {
-  params: Promise<{
-    slug: string;  
-  }>;
-}
+
 
 export default async function EditPostPage({ params }: EditPostPageProps) {
   const { slug } = await params;  

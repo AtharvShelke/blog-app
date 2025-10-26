@@ -1,8 +1,9 @@
-import { trpc } from '@/lib/trpc/server';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText, FolderOpen, Eye, PenSquare, TrendingUp } from 'lucide-react';
+import { trpc } from '@/lib/trpc/server';
 
 export default async function DashboardPage() {
   const posts = await trpc.post.getAll({});

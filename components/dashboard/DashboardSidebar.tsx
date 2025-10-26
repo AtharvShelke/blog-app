@@ -3,18 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { 
   LayoutDashboard, 
   FileText, 
   FolderOpen, 
-  Settings,
-  Home,
-  Eye
+  Eye,
+  PanelLeftClose,
+  PanelLeftOpen 
 } from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
 
 const sidebarItems = [
   {
-    title: 'Dashboard',
+    title: 'Overview',
     href: '/dashboard',
     icon: LayoutDashboard,
   },
@@ -37,47 +39,98 @@ const sidebarItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { sidebarOpen, toggleSidebar } = useUIStore();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r bg-background p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Home className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold">BlogApp</span>
-        </Link>
-      </div>
+    <>
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
 
-      <nav className="space-y-1">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href || 
-            (item.href !== '/dashboard' && pathname.startsWith(item.href));
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-              )}
-            >
-              <Icon className="w-5 h-5" />
-              {item.title}
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-50 h-screen w-64 border-r bg-background transition-transform duration-300 lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex h-full flex-col">
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between border-b px-6">
+            <Link href="/dashboard" className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="font-bold">Dashboard</span>
             </Link>
-          );
-        })}
-      </nav>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="lg:hidden"
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </Button>
+          </div>
 
-      <div className="pt-6 border-t">
-        <p className="text-xs text-muted-foreground px-3">
-          Dashboard v1.0
-        </p>
-      </div>
-    </aside>
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== '/dashboard' && pathname.startsWith(item.href));
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => {
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth < 1024) {
+                      toggleSidebar();
+                    }
+                  }}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-accent',
+                    isActive
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      : 'text-muted-foreground'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.title}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="border-t p-4">
+            <p className="text-xs text-muted-foreground">
+              BlogApp Dashboard v1.0
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      {/* Toggle button for desktop */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleSidebar}
+        className="fixed bottom-4 left-4 z-40 hidden lg:flex"
+      >
+        {sidebarOpen ? (
+          <PanelLeftClose className="h-5 w-5" />
+        ) : (
+          <PanelLeftOpen className="h-5 w-5" />
+        )}
+      </Button>
+    </>
   );
 }

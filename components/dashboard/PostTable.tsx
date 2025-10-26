@@ -27,24 +27,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { PostTableProps } from '@/types/post';
 
-interface PostTableProps {
-    posts: Array<{
-        id: number;
-        title: string;
-        slug: string;
-        published: boolean;
-        createdAt: Date;
-        author: {
-            name: string;
-        };
-        postCategories?: Array<{
-            category: {
-                name: string;
-            };
-        }>;
-    }>;
-}
 
 export function PostTable({ posts }: PostTableProps) {
     const router = useRouter();
