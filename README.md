@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Multi-User Blog Platform
 
-## Getting Started
+A modern, full-stack blog platform built with Next.js 14, featuring multi-user support, category management, image uploads, and a professional interface with light/dark mode support.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
+- **Multi-user blog system** with user authentication
+- **Category management** with filtering capabilities
+- **Trending blogs** section
+- **Rich text editor** for blog creation
+- **Image uploads** via UploadThing
+- **Light/Dark mode** with system preference detection
+- **Responsive design** with Tailwind CSS
+- **Type-safe API** with tRPC
+- **PostgreSQL database** with Drizzle ORM
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Database:** PostgreSQL (Neon)
+- **ORM:** Drizzle ORM
+- **API Layer:** tRPC v11
+- **Styling:** Tailwind CSS
+- **File Uploads:** UploadThing
+- **Validation:** Zod
+- **Deployment:** Vercel
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** 18.x or higher
+- **npm**, **yarn**, **pnpm**, or **bun** package manager
+- **Git** for version control
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+
+git clone https://github.com/AtharvShelke/blog-app.git
+cd blog-ap
+
+text
+
+### 2. Install Dependencies
+
+npm install
+
+or
+yarn install
+
+or
+pnpm install
+
+or
+bun install
+
+text
+
+### 3. Set Up Environment Variables
+
+Create a `.env` file in the root directory and add all the environment variables listed above.
+
+### 4. Set Up the Database
+
+Generate Drizzle schema migrations
+npm run db:generate
+
+Push the schema to your PostgreSQL database
+npm run db:push
+
+(Optional) Open Drizzle Studio to view/manage your database
+npm run db:studio
+
+text
+
+### 5. Seed the Database (Optional)
+
+To populate your database with sample data:
+
+**Option 1: Using Drizzle Studio**
+1. Run `npm run db:studio`
+2. Navigate to `http://localhost:4983`
+3. Manually add sample blogs, categories, and users through the UI
+
+**Option 2: Custom Seed Script**
+If you have a `seed.ts` file in your project:
+
+npm run db:seed
+
+text
+
+**Manual Seeding Steps:**
+1. Create user accounts through your application
+2. Add 3-5 categories (e.g., Technology, Lifestyle, Business, Travel)
+3. Create sample blog posts with different authors and categories
+4. Test trending functionality by creating posts with varying view counts
+
+### 6. Run the Development Server
+
 npm run dev
-# or
+
+or
 yarn dev
-# or
+
+or
 pnpm dev
-# or
+
+or
 bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+text
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📝 Available Scripts
 
-## Learn More
+Development
+npm run dev # Start development server on localhost:3000
+npm run build # Build production bundle
+npm run start # Start production server
+npm run lint # Run ESLint for code quality
+Database Management
+npm run db:generate # Generate Drizzle migrations from schema
+npm run db:push # Push schema changes to database
+npm run db:studio # Open Drizzle Studio (GUI for database)
+npm run db:seed # Seed database with sample data (if configured)
 
-To learn more about Next.js, take a look at the following resources:
+## 👤 Author
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Atharv Shelke**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- GitHub: [@AtharvShelke](https://github.com/AtharvShelke)
 
-## Deploy on Vercel
+## 🔗 Links
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Live Demo:** [https://blog-app-theta-roan.vercel.app/](https://blog-app-theta-roan.vercel.app/)
+- **Repository:** [https://github.com/AtharvShelke/blog-app.git](https://github.com/AtharvShelke/blog-app.git)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+⭐ If you found this project helpful, please consider giving it a star!
